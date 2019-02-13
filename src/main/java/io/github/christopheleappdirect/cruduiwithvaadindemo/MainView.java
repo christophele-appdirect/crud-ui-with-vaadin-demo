@@ -1,11 +1,19 @@
 package io.github.christopheleappdirect.cruduiwithvaadindemo;
 
 import static com.vaadin.flow.data.value.ValueChangeMode.EAGER;
+import static java.util.Arrays.asList;
 import static org.springframework.util.StringUtils.isEmpty;
 import static org.vaadin.crudui.crud.CrudOperation.UPDATE;
 
+import java.security.SecureRandom;
+import java.util.List;
+
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.vaadin.crudui.crud.impl.GridCrud;
 
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.html.Label;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
@@ -19,11 +27,18 @@ public class MainView extends VerticalLayout {
 	public MainView(CustomerService service) {
 		this.service = service;
 
+		// Hello beautiful
+		Label fullname = new Label("Hello " + SecurityContextHolder.getContext().getAuthentication().getName() + ". " + veryNiceMessage());
+
 		// Search bar
 		TextField filter = new TextField();
 		filter.setPlaceholder("Filter by last name");
 		filter.setValueChangeMode(EAGER);
 		filter.addValueChangeListener(e -> listCustomers(e.getValue()));
+
+		// Logout
+		Button logout = new Button("Logout",
+		                           event -> getUI().ifPresent(ui -> ui.getPage().executeJavaScript("window.open(\"/logout\", \"_self\");")));
 
 		// Main table
 		crud = new GridCrud<>(CustomerBean.class);
@@ -48,8 +63,11 @@ public class MainView extends VerticalLayout {
 		crud.setDeleteOperationVisible(false);
 
 		// Wrap everything up
+		HorizontalLayout top = new HorizontalLayout();
+		top.add(filter, logout);
+
 		VerticalLayout container = new VerticalLayout();
-		container.add(filter, crud);
+		container.add(fullname, top, crud);
 		container.setSizeFull();
 
 		setSizeFull();
@@ -62,5 +80,12 @@ public class MainView extends VerticalLayout {
 		} else {
 			crud.getGrid().setItems(service.findByLastNameContainsIgnoreCase(filterText));
 		}
+	}
+
+	private String veryNiceMessage() {
+		List<String> veryNiceMessages = asList("You look very handsome today.",
+		                                       "What a beautiful day, isn't it?",
+		                                       "Nice to see you again.");
+		return veryNiceMessages.get(new SecureRandom().nextInt(veryNiceMessages.size()));
 	}
 }
